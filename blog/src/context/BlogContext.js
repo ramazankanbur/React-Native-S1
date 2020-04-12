@@ -1,16 +1,11 @@
 import createDataContext from './createDataContext';
 
+import jsonServer from '../api/jsonServer';
+
 const blogReducer = (state, action) => {
   switch (action.type) {
-    case 'add_blogpost':
-      return [
-        ...state,
-        {
-          id: Math.floor(Math.random() * 99999),
-          title: action.payload.title,
-          content: action.payload.content
-        }
-      ];
+    case 'get_blogposts':
+      return action.payload;
     case 'edit_blogpost':
       return state.map(blogPost => {
         return blogPost.id === action.payload.id ? action.payload : blogPost;
@@ -25,32 +20,51 @@ const blogReducer = (state, action) => {
   }
 };
 
+const getBlogPosts = dispatch => {
+  return async () => {
+    const response = await jsonServer.get('/blogposts');
+    dispatch({ type: 'get_blogposts', payload: response.data })
+  };
+};
+
 const addBlogPost = dispatch => {
-  return (title, content, callback) => {
-    dispatch({ type: 'add_blogpost', payload: { title, content } });
-    callback();
+  return async (title, content, callback) => {
+    await jsonServer.post('/blogposts', {
+      title, content
+    });
+    if (callback) {
+      callback();
+    }
   };
 };
 
 const editBlogPost = dispatch => {
   //alttaki metod componentten çağrılır
-  return (blogPostId, title, content, callback) => {
+  return async (blogPostId, title, content, callback) => {
+    await jsonServer.put(`/blogposts/${blogPostId}`, {
+      title,
+      content
+    });
     dispatch({
       type: 'edit_blogpost',
       payload: { id: blogPostId, title, content }
     });
-    callback();
+    if (callback) {
+      callback();
+    }
+
   };
 };
 
 const deleteBlogPost = dispatch => {
-  return id => {
+  return async (id, callback) => {
+    await jsonServer.delete(`/blogposts/${id}`);
     dispatch({ type: 'delete_blogpost', payload: id });
   };
 };
 
 export const { Context, Provider } = createDataContext(
   blogReducer,
-  { addBlogPost, editBlogPost, deleteBlogPost },
-  [{ title: 'Test title', content: 'test content', id: 1 }]
+  { addBlogPost, editBlogPost, deleteBlogPost, getBlogPosts },
+  []
 );

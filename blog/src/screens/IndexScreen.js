@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,24 @@ import { Feather } from '@expo/vector-icons';
 import { Context } from '../context/BlogContext';
 
 const IndexScreen = ({ navigation }) => {
-  const { state, deleteBlogPost } = useContext(Context);
+  const { state, deleteBlogPost, getBlogPosts } = useContext(Context);
+
+  //component ilk init oldugunda calisir onun disinda calismaz
+  useEffect(() => {
+    getBlogPosts();
+
+    //bu sayfa navigation uzerinden gosterildiginde dinlemeye basla
+    const listener = navigation.addListener('didFocus', () => {
+      getBlogPosts();
+    });
+    //sayfa gosterimi tamamlaninca dinlemeyi bitir. clear
+    return () => {
+      listener.remove();
+    }
+  }, [])
 
   return (
-    <View> 
+    <View>
       <FlatList
         data={state}
         keyExtractor={blogPost => blogPost.id.toString()}
